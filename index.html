@@ -351,10 +351,13 @@
 
       function initRunawayNo() {
         const btnNo = document.getElementById('btn-no');
+        const btnYes = document.getElementById('btn-yes');
         const container = document.querySelector('.question-buttons');
-        if (!container || !btnNo) return;
+        if (!container || !btnNo || !btnYes) return;
         const cooldownMs = 280;
+        const minDistFromYes = 100;
         let lastMove = 0;
+        let lastNx = 0, lastNy = 0;
         let rafId = null;
 
         function tryMoveNo(px, py) {
@@ -368,6 +371,23 @@
           lastMove = now;
           var nx = (Math.random() - 0.5) * 380;
           var ny = (Math.random() - 0.5) * 200;
+          var baseNoLeft = br.left - lastNx;
+          var baseNoTop = br.top - lastNy;
+          var newNoCx = baseNoLeft + nx + br.width / 2;
+          var newNoCy = baseNoTop + ny + br.height / 2;
+          var yesR = btnYes.getBoundingClientRect();
+          var yesCx = yesR.left + yesR.width / 2;
+          var yesCy = yesR.top + yesR.height / 2;
+          var d = Math.hypot(newNoCx - yesCx, newNoCy - yesCy);
+          if (d < minDistFromYes && d > 0) {
+            var scale = minDistFromYes / d;
+            newNoCx = yesCx + (newNoCx - yesCx) * scale;
+            newNoCy = yesCy + (newNoCy - yesCy) * scale;
+            nx = newNoCx - baseNoLeft - br.width / 2;
+            ny = newNoCy - baseNoTop - br.height / 2;
+          }
+          lastNx = nx;
+          lastNy = ny;
           btnNo.style.transform = 'translate(' + Math.round(nx) + 'px, ' + Math.round(ny) + 'px)';
         }
 
