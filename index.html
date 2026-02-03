@@ -71,7 +71,7 @@
       padding: 0.5rem 1rem;
       font-size: 0.95rem;
       position: absolute;
-      transition: transform 0.25s ease-out;
+      transition: transform 0.15s ease-out;
     }
 
     .question-buttons {
@@ -251,7 +251,7 @@
     (function() {
       const HEARTS_TOTAL = 5;
       const PAIRS = 4;
-      const NO_RUN_THRESHOLD = 90;
+      const NO_RUN_THRESHOLD = 130;
       const CONFETTI_COUNT = 50;
 
       const screens = document.querySelectorAll('.screen');
@@ -353,7 +353,7 @@
         const btnNo = document.getElementById('btn-no');
         const container = document.querySelector('.question-buttons');
         if (!container || !btnNo) return;
-        const cooldownMs = 450;
+        const cooldownMs = 280;
         let lastMove = 0;
         let rafId = null;
 
@@ -366,8 +366,8 @@
           const dist = Math.hypot(px - cx, py - cy);
           if (dist >= NO_RUN_THRESHOLD) return;
           lastMove = now;
-          var nx = (Math.random() - 0.5) * 220;
-          var ny = (Math.random() - 0.5) * 120;
+          var nx = (Math.random() - 0.5) * 380;
+          var ny = (Math.random() - 0.5) * 200;
           btnNo.style.transform = 'translate(' + Math.round(nx) + 'px, ' + Math.round(ny) + 'px)';
         }
 
