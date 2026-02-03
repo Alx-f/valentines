@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- test push -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>For You 💕</title>
+  <title>For You</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       font-family: Georgia, serif;
       background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fad0c4 100%);
       color: #5c2a4a;
+      overflow-x: hidden;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       padding: 2rem;
       text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
+    .screen.active {
+      display: flex;
+      opacity: 1;
+    }
+
     h1 {
       font-size: clamp(1.8rem, 5vw, 2.8rem);
       margin-bottom: 1rem;
@@ -31,12 +42,398 @@
     }
     .heart { font-size: 3rem; margin: 1rem 0; animation: pulse 1.2s ease-in-out infinite; }
     @keyframes pulse { 50% { transform: scale(1.2); } }
+
+    .btn {
+      margin-top: 1.5rem;
+      padding: 0.9rem 2rem;
+      font-size: 1.2rem;
+      font-family: Georgia, serif;
+      color: #5c2a4a;
+      background: rgba(255,255,255,0.8);
+      border: 2px solid #e8a0b8;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .btn:hover { background: #fff; transform: scale(1.05); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-yes {
+      padding: 1rem 2.5rem;
+      font-size: 1.4rem;
+      background: #ff6b8a;
+      color: #fff;
+      border-color: #e84a6f;
+    }
+    .btn-yes:hover { background: #e84a6f; }
+
+    .btn-no {
+      padding: 0.5rem 1rem;
+      font-size: 0.95rem;
+      position: absolute;
+      transition: transform 0.25s ease-out;
+    }
+
+    .question-buttons {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      min-height: 120px;
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* Catch hearts */
+    .catch-screen .counter {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+    .catch-zone {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      height: 360px;
+      border: 2px dashed rgba(92,42,74,0.3);
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    .catch-heart {
+      position: absolute;
+      font-size: 2.5rem;
+      cursor: pointer;
+      user-select: none;
+      animation: fall 4s linear forwards;
+    }
+    .catch-heart.caught {
+      animation: pop 0.3s ease forwards;
+    }
+    @keyframes fall {
+      from { transform: translateY(-50px); }
+      to { transform: translateY(400px); }
+    }
+    @keyframes pop {
+      to { transform: scale(2); opacity: 0; }
+    }
+
+    /* Memory match */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 64px);
+      grid-template-rows: repeat(2, 64px);
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .memory-card {
+      width: 64px;
+      height: 64px;
+      position: relative;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: transform 0.35s ease;
+      transform-style: preserve-3d;
+    }
+    .memory-card:hover:not(.flipped) .face.back { background: rgba(255,255,255,0.95); }
+    .memory-card .face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.4rem;
+      border: 2px solid #e8a0b8;
+      backface-visibility: hidden;
+      font-size: 1.8rem;
+    }
+    .memory-card .face.back { background: linear-gradient(135deg, #ff9a9e, #fecfef); }
+    .memory-card .face.front {
+      background: #fff;
+      transform: rotateY(180deg);
+    }
+    .memory-card.flipped {
+      pointer-events: none;
+      transform: rotateY(180deg);
+    }
+
+    /* Celebration */
+    .celebration-msg { margin-bottom: 0.5rem; }
+    .celebration-sub { font-size: 1rem; opacity: 0.9; }
+    .confetti-container {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 1px;
+      animation: confetti-fall 3.5s ease-out forwards;
+    }
+    .confetti.drift-l { animation-name: confetti-fall-l; }
+    .confetti.drift-r { animation-name: confetti-fall-r; }
+    @keyframes confetti-fall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes confetti-fall-l {
+      0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) translateX(-80px) rotate(720deg); opacity: 0; }
+    }
+    @keyframes confetti-fall-r {
+      0% { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) translateX(80px) rotate(720deg); opacity: 0; }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.8rem 1.5rem;
+      background: rgba(92,42,74,0.95);
+      color: #fff;
+      border-radius: 2rem;
+      font-size: 1rem;
+      z-index: 100;
+      animation: toast-in 0.3s ease;
+    }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <div class="heart">💕</div>
-  <h1>Will you be my Valentine?</h1>
-  <p>You make every day brighter. I made this little page just for you.</p>
-  <div class="heart">💕</div>
+  <!-- Screen 1: Welcome -->
+  <section class="screen active" data-screen="welcome">
+    <h1>Something for you</h1>
+    <p>Click to begin.</p>
+    <button class="btn" id="btn-begin">Begin</button>
+  </section>
+
+  <!-- Screen 2: Catch hearts -->
+  <section class="screen" data-screen="catch">
+    <p class="counter"><span id="hearts-count">0</span> / 5 hearts</p>
+    <p>Catch the hearts!</p>
+    <div class="catch-zone" id="catch-zone"></div>
+  </section>
+
+  <!-- Screen 3: Memory match -->
+  <section class="screen" data-screen="memory">
+    <h1>Match the pairs</h1>
+    <div class="memory-grid" id="memory-grid"></div>
+  </section>
+
+  <!-- Screen 4: The question -->
+  <section class="screen" data-screen="question">
+    <div class="heart">&#10084;</div>
+    <h1>Will you be my Valentine?</h1>
+    <p>You make every day brighter. I made this little page just for you.</p>
+    <div class="question-buttons">
+      <button class="btn btn-yes" id="btn-yes">Yes!</button>
+      <button class="btn btn-no" id="btn-no">No</button>
+    </div>
+  </section>
+
+  <!-- Screen 5: Celebration -->
+  <section class="screen" data-screen="celebration">
+    <h1 class="celebration-msg">You said yes!</h1>
+    <p class="celebration-sub">Can't wait to celebrate with you.</p>
+    <div class="heart">&#10084;</div>
+  </section>
+
+  <script>
+    (function() {
+      const HEARTS_TOTAL = 5;
+      const PAIRS = 4;
+      const NO_RUN_THRESHOLD = 90;
+      const CONFETTI_COUNT = 50;
+
+      const screens = document.querySelectorAll('.screen');
+      function showScreen(name) {
+        screens.forEach(s => {
+          s.classList.toggle('active', s.dataset.screen === name);
+        });
+      }
+
+      document.getElementById('btn-begin').addEventListener('click', function() {
+        showScreen('catch');
+        startCatchHearts();
+      });
+
+      function startCatchHearts() {
+        const zone = document.getElementById('catch-zone');
+        const countEl = document.getElementById('hearts-count');
+        zone.innerHTML = '';
+        let caught = 0;
+        countEl.textContent = '0';
+
+        function spawnHeart() {
+          const w = zone.offsetWidth || 352;
+          const el = document.createElement('div');
+          el.className = 'catch-heart';
+          el.textContent = '\u2764';
+          el.style.left = Math.max(0, Math.random() * (w - 48)) + 'px';
+          el.style.top = '-50px';
+          zone.appendChild(el);
+          el.addEventListener('click', function catchOne() {
+            if (el.classList.contains('caught')) return;
+            el.classList.add('caught');
+            el.removeEventListener('click', catchOne);
+            caught++;
+            countEl.textContent = String(caught);
+            setTimeout(function() { el.remove(); }, 280);
+            if (caught >= HEARTS_TOTAL) {
+              showScreen('memory');
+              initMemoryGame();
+            }
+          });
+        }
+
+        for (let i = 0; i < HEARTS_TOTAL; i++) {
+          setTimeout(spawnHeart, i * 600);
+        }
+      }
+
+      function initMemoryGame() {
+        const grid = document.getElementById('memory-grid');
+        grid.innerHTML = '';
+        const values = [];
+        for (let i = 0; i < PAIRS; i++) {
+          values.push(i, i);
+        }
+        for (let i = values.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [values[i], values[j]] = [values[j], values[i]];
+        }
+        const icons = ['\u2764', '\uD83D\uDC96', '\uD83D\uDC97', '\uD83D\uDC98'];
+        let open = [];
+        let matched = 0;
+
+        values.forEach(function(val, idx) {
+          const card = document.createElement('div');
+          card.className = 'memory-card';
+          card.dataset.value = val;
+          card.dataset.idx = idx;
+          card.innerHTML = '<span class="face back">?</span><span class="face front">' + icons[val] + '</span>';
+          card.addEventListener('click', function() {
+            if (card.classList.contains('flipped') || open.length >= 2) return;
+            card.classList.add('flipped');
+            open.push(card);
+            if (open.length === 2) {
+              const [a, b] = open;
+              if (a.dataset.value === b.dataset.value) {
+                matched++;
+                open = [];
+                if (matched === PAIRS) {
+                  setTimeout(function() {
+                    showScreen('question');
+                    initRunawayNo();
+                  }, 400);
+                }
+              } else {
+                setTimeout(function() {
+                  a.classList.remove('flipped');
+                  b.classList.remove('flipped');
+                  open = [];
+                }, 600);
+              }
+            }
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      function initRunawayNo() {
+        const btnNo = document.getElementById('btn-no');
+        const container = document.querySelector('.question-buttons');
+        if (!container || !btnNo) return;
+        const cooldownMs = 450;
+        let lastMove = 0;
+        let rafId = null;
+
+        function tryMoveNo(px, py) {
+          const now = Date.now();
+          if (now - lastMove < cooldownMs) return;
+          const br = btnNo.getBoundingClientRect();
+          const cx = br.left + br.width / 2;
+          const cy = br.top + br.height / 2;
+          const dist = Math.hypot(px - cx, py - cy);
+          if (dist >= NO_RUN_THRESHOLD) return;
+          lastMove = now;
+          var nx = (Math.random() - 0.5) * 220;
+          var ny = (Math.random() - 0.5) * 120;
+          btnNo.style.transform = 'translate(' + Math.round(nx) + 'px, ' + Math.round(ny) + 'px)';
+        }
+
+        function onMove(px, py) {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(function() {
+            tryMoveNo(px, py);
+            rafId = null;
+          });
+        }
+
+        document.addEventListener('mousemove', function(e) {
+          onMove(e.clientX, e.clientY);
+        });
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches.length) onMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+      }
+
+      function goCelebration(fromNo) {
+        if (fromNo) {
+          const toast = document.createElement('div');
+          toast.className = 'toast';
+          toast.textContent = "I knew you meant Yes!";
+          document.body.appendChild(toast);
+          setTimeout(function() {
+            toast.remove();
+            showScreen('celebration');
+            runConfetti();
+          }, 800);
+        } else {
+          showScreen('celebration');
+          runConfetti();
+        }
+      }
+
+      document.getElementById('btn-yes').addEventListener('click', function() {
+        goCelebration(false);
+      });
+      document.getElementById('btn-no').addEventListener('click', function() {
+        goCelebration(true);
+      });
+
+      function runConfetti() {
+        const palette = ['#ff6b8a', '#ff9a9e', '#fecfef', '#e8a0b8', '#ffb3c6', '#e84a6f'];
+        const container = document.createElement('div');
+        container.className = 'confetti-container';
+        document.body.appendChild(container);
+
+        for (let i = 0; i < CONFETTI_COUNT; i++) {
+          const c = document.createElement('div');
+          c.className = 'confetti' + (Math.random() < 0.5 ? ' drift-l' : ' drift-r');
+          c.style.left = Math.random() * 100 + '%';
+          c.style.top = '-10px';
+          c.style.background = palette[Math.floor(Math.random() * palette.length)];
+          c.style.animationDelay = (Math.random() * 0.5) + 's';
+          const w = 6 + Math.random() * 8;
+          c.style.width = w + 'px';
+          c.style.height = (w * 0.6) + 'px';
+          container.appendChild(c);
+        }
+        setTimeout(function() {
+          container.remove();
+        }, 4000);
+      }
+    })();
+  </script>
 </body>
 </html>
